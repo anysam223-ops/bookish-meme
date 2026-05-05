@@ -10,25 +10,40 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Extract Project Files
+      - name: Extract and Organize Project
         run: |
-          unzip -o SCEditorAndroid.zip -d .
-          # Se o zip criou uma pasta extra, movemos os arquivos para a raiz
-          if [ -d "SCEditorAndroid" ]; then
-            mv SCEditorAndroid/* .
+          # Extrai o ZIP
+          unzip -o SCEditorAndroid.zip -d temp_folder
+          
+          # Procura o arquivo gradlew para saber onde é a raiz real do código
+          GRADLEW_PATH=$(find temp_folder -name gradlew | head -n 1)
+          
+          if [ -z "$GRADLEW_PATH" ]; then
+            echo "ERRO: O arquivo 'gradlew' não foi encontrado dentro do ZIP!"
+            exit 1
           fi
+          
+          # Pega a pasta onde o gradlew está
+          ROOT_DIR=$(dirname "$GRADLEW_PATH")
+          
+          # Move tudo dessa pasta para a raiz do repositório
+          cp -rn "$ROOT_DIR"/* .
+          
+          # Limpeza
+          rm -rf temp_folder
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: 'gradle'
           
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
         
       - name: Build with Gradle
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
