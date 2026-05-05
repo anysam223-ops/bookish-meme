@@ -1,14 +1,24 @@
 name: Android CI
 
 on:
-  workflow_dispatch: # Permite que você inicie a compilação manualmente
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: set up JDK 17
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Extract Project Files
+        run: |
+          unzip -o SCEditorAndroid.zip -d .
+          # Se o zip criou uma pasta extra, movemos os arquivos para a raiz
+          if [ -d "SCEditorAndroid" ]; then
+            mv SCEditorAndroid/* .
+          fi
+
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
@@ -25,4 +35,3 @@ jobs:
         with:
           name: sc-editor-apk
           path: app/build/outputs/apk/debug/*.apk
-
